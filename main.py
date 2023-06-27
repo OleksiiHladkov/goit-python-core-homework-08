@@ -1,34 +1,51 @@
 from datetime import datetime, timedelta
 
 
-def get_next_seven_days() -> dict[int,datetime]:
+def get_period(next_week_start:bool) -> dict[int,datetime]:
     next_days = []
-    current_date = datetime.now()
+    curent_date = datetime.now()
+    
+    if next_week_start:
+        # we will use next day for begining of list (start_period + 1 day), that's why use 4 
+        start_period = curent_date + timedelta(days=4-curent_date.weekday())
+    else:
+        # we will use tomorrow for begining of list (curent_date + 1 day)
+        start_period = curent_date
 
     count = 1
 
     while count <= 7:
-        current_date = current_date + timedelta(1)
-        next_days.append((current_date.weekday(), current_date))
+        start_period += timedelta(1)
+        next_days.append((start_period.weekday(), start_period))
         count += 1
 
     return dict(next_days)
 
+
 def get_datetime_date(date: datetime|str) -> datetime:
     if isinstance(date, str):
-        args = date.split("-")
-        year = int(args[0])
-        month = int(args[1])
-        day = int(args[2])
-        return datetime(year, month, day)
+        if date.find("-") == 4:
+            return datetime.strptime(date, "%Y-%m-%d")
+        elif date.find("-") == 2:
+            return datetime.strptime(date, "%d-%m-%Y")
+        elif date.find(".") == 4:
+            return datetime.strptime(date, "%Y.%m.%d")
+        elif date.find(".") == 2:
+            return datetime.strptime(date, "%d.%m.%Y")
+        elif date.find("/") == 4:
+            return datetime.strptime(date, "%Y/%m/%d")
+        elif date.find("/") == 2:
+            return datetime.strptime(date, "%d/%m/%Y")
+        else:
+            return datetime(1, 1, 1)
     else:
         return date
+    
 
-def get_birthdays_per_week(users: list[dict[str,datetime|str]]) -> None:
-    weekdays = get_next_seven_days()
+def get_birthdays_per_week(users: list[dict[str,datetime|str]], next_week_start:bool=False) -> None:
+    weekdays = get_period(next_week_start)
     
     moove_users_lst = []
-    is_already_moove = False
     
     for weekday_int, weekday_datetime in weekdays.items():
         users_lst = []
@@ -42,9 +59,9 @@ def get_birthdays_per_week(users: list[dict[str,datetime|str]]) -> None:
                     moove_users_lst.append(user_name)
                 else:
                     users_lst.append(user_name)
-            elif weekday_int == 0 and not is_already_moove:
-                is_already_moove = True
-                users_lst.extend(moove_users_lst)
+        
+        if weekday_int == 0:
+            users_lst.extend(moove_users_lst)
         
         if len(users_lst):
             weekday_str = weekday_datetime.strftime("%A")
@@ -54,11 +71,20 @@ def get_birthdays_per_week(users: list[dict[str,datetime|str]]) -> None:
 
 
 if __name__ == "__main__":
+    # test dict
     users = [{"name": "Oleksii Hladkov", "birthday": datetime(1989, 12, 11)},
-            {"name": "Luke Skywalker", "birthday": datetime(1977, 6, 28)},
-            {"name": "Leia Organa", "birthday": datetime(1977, 6, 28)},
-            {"name": "Han Solo", "birthday": datetime(1977, 6, 29)},
-            {"name": "Chewbacca", "birthday": "1977-6-30"},
-            {"name": "Wilhuff Tarkin", "birthday": datetime(1977, 7, 1)}]
+            {"name": "Luke Skywalker", "birthday": datetime(1977, 6, 29)},
+            {"name": "Leia Organa", "birthday": datetime(1977, 6, 29)},
+            {"name": "Han Solo", "birthday": datetime(1977, 6, 30)},
+            {"name": "Chewbacca", "birthday": "1977-7-1"},
+            {"name": "Wilhuff Tarkin", "birthday": datetime(1977, 7, 2)},
+            {"name": "Grido", "birthday": "1977-7-3"},
+            {"name": "Obi-Wan Kenobi", "birthday": "1977-7-4"},
+            {"name": "Darth Vader", "birthday": "1977-7-5"},
+            {"name": "R2-D2", "birthday": "1977-7-5"}]
     
-    get_birthdays_per_week(users)
+    # week type switcher
+    next_week_start = False
+    # next_week_start = True
+    
+    get_birthdays_per_week(users, next_week_start)
